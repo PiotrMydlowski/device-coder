@@ -1,0 +1,523 @@
+<html>
+<head>
+<title> Device Coder</title>
+
+<style>
+
+body
+{
+	background-color: #000000;
+	color: lightgray;
+	font-size: 28px;
+	font-family: 'Arial', monospace;
+}
+
+#menu
+{
+}
+
+.language
+{
+	font-size: 16px;
+	display: inline;
+	float: right;
+	padding: 10px;
+}
+
+.language:hover
+{
+	color: orange;
+	cursor: pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+	
+
+	<div id="languageMenu" class="menu">
+		<div id="langEN" class="language">EN</div>
+		<div id="langPL" class="language">PL</div>
+	</div>
+
+	<h1 id="mainTitle"></h1>
+	
+	<div id="searchByCodeText">
+	</div>
+	
+	<div id="searchByCodeInput">
+		<input type="text" placeholder="?" id="inputCode" onchange="interpretCode()">
+	</div>
+	
+	<div id="searchByCodeExplanation">???</div>
+	
+	<div id="generatedCodeText"></div>
+	<div id="generatedCodeOutput">*</div>
+
+	<div id="deviceChoiceText"></div>
+	
+	<div id="device">
+	</div>
+	
+	<div id="deviceOptions">	
+	</div>
+
+<script>
+const CODE_SIZE = 40;
+const BLANK_CHAR = "*";
+
+var labels = [];
+var languages = ["EN","PL"];
+var currentLanguage;
+var currentDevice;
+var optionsAmount = 0;
+
+labels.push({
+	mainTitle:"Device Coder",
+	searchByCodeText:"Enter your code here: (confirm with enter)",
+	deviceChoiceText:"Choose your device:",
+	generatedCodeText:"Your generated code:",
+	blank:"Not chosen",
+	errorCode:"Input error"
+});
+
+labels.push({
+	mainTitle:"Koder urzadzen",
+	searchByCodeText:"Wprowadz kod: (zatwierdz za pomoca enter)",
+	deviceChoiceText:"Wybierz urzadzenie:",
+	generatedCodeText:"Wygenerowany kod:",
+	blank:"Nie wybrano",
+	errorCode:"Blad wprowadzania"
+});
+
+var deviceOptions = [];
+
+deviceOptions.push({
+	optionNumber: 0,
+	deviceNumber: 0,
+	language: 0,
+	codeText:"",
+	fullText:"No device",
+	selected: false,
+	labels: [],
+});
+
+deviceOptions.push({
+	optionNumber: 0,
+	deviceNumber: 0,
+	language: 1,
+	codeText:"",
+	fullText:"Nie wybrano",
+	selected: false,
+	labels: [],
+});
+
+/////////Devices//////////////////
+
+deviceOptions.push({
+	optionNumber: 0,
+	deviceNumber: 1,
+	language: 0,
+	codeText:"dev1",
+	fullText:"Device1",
+	selected: false,
+	labels: ["d1l1","d1l2","d1l3"],
+});
+
+deviceOptions.push({
+	optionNumber: 0,
+	deviceNumber: 1,
+	language: 1,
+	codeText:"urz1",
+	fullText:"Urzadzenie1",
+	selected: false,
+	labels: ["u1l1","u1l2","u1l3"],
+});
+
+deviceOptions.push({
+	optionNumber: 0,
+	deviceNumber: 2,
+	language: 0,
+	codeText:"dev2",
+	fullText:"Device2",
+	selected: false,
+	labels: ["d2l1","d2l2","d2l3"],
+});
+
+deviceOptions.push({
+	optionNumber: 0,
+	deviceNumber: 2,
+	language: 1,
+	codeText:"urz2",
+	fullText:"Urzadzenie2",
+	selected: false,
+	labels: ["u2l1","u2l2","u2l3"],
+});
+
+////////////Options//////////////////
+
+deviceOptions.push({
+	optionNumber: 1,
+	deviceNumber: 1,
+	language: 0,
+	codeText:"dev1_o1",
+	fullText:"Device1_o1",
+	selected: false,
+});
+
+deviceOptions.push({
+	optionNumber: 1,
+	deviceNumber: 1,
+	language: 1,
+	codeText:"urz1_o1",
+	fullText:"Urzadzenie1_o1",
+	selected: false,
+});
+
+deviceOptions.push({
+	optionNumber: 1,
+	deviceNumber: 1,
+	language: 1,
+	codeText:"urz1_o1_",
+	fullText:"Urzadzenie1_o1_",
+	selected: false,
+});
+
+deviceOptions.push({
+	optionNumber: 1,
+	deviceNumber: 2,
+	language: 0,
+	codeText:"dev2_o1",
+	fullText:"Device2_o1",
+	selected: false,
+});
+
+deviceOptions.push({
+	optionNumber: 1,
+	deviceNumber: 2,
+	language: 1,
+	codeText:"urz2_o1",
+	fullText:"Urzadzenie2_o1",
+	selected: false,
+});
+
+deviceOptions.push({
+	optionNumber: 2,
+	deviceNumber: 1,
+	language: 0,
+	codeText:"dev1_o2",
+	fullText:"Device1_o2",
+	selected: false,
+});
+
+deviceOptions.push({
+	optionNumber: 2,
+	deviceNumber: 1,
+	language: 1,
+	codeText:"urz1_o2",
+	fullText:"Urzadzenie1_o2",
+	selected: false,
+});
+
+deviceOptions.push({
+	optionNumber: 2,
+	deviceNumber: 2,
+	language: 0,
+	codeText:"dev2_o2",
+	fullText:"Device2_o2",
+	selected: false,
+});
+
+deviceOptions.push({
+	optionNumber: 2,
+	deviceNumber: 2,
+	language: 1,
+	codeText:"urz2_o2",
+	fullText:"Urzadzenie2_o2",
+	selected: false,
+});
+
+//main window onload function, starts after downloading
+window.onload = function(){
+	onLoadMain();
+}
+
+function onLoadMain(){
+	
+	var languageMenuText = "";
+	currentDevice = 0;
+	clearChoice();
+	for(i=0 ; i<languages.length ; i++)
+	{	
+		languageMenuText += '<div id="lang'+languages[i];
+		languageMenuText += '" class="language" onclick="refreshLanguage('+i;
+		languageMenuText += ')">'+languages[i]+'</div>';
+	}	
+	document.getElementById("languageMenu").innerHTML = languageMenuText;
+	
+	refreshLanguage(1);
+	
+	for(i = 0 ; i<deviceOptions.length ; i++)
+	{
+		if(deviceOptions[i].optionNumber > optionsAmount)
+		{
+			optionsAmount = deviceOptions[i].optionNumber;
+		}
+	}
+	
+	if(optionsAmount > CODE_SIZE)
+	{
+		optionsAmount = CODE_SIZE;
+	}
+	
+}
+
+function interpretCode(){
+	var interpretedCodeText = "";
+	var code = document.getElementById("inputCode").value;
+	var codeRest = code;
+	var flag = 1;
+	var chosenDeviceIndex = 0;
+	
+	for(o=0; o< optionsAmount +1; o++)
+	{
+		if(codeRest.length == 0)
+		{
+			break;
+		}
+	
+		if(codeRest.split('')[0] == BLANK_CHAR)
+		{
+			codeRest = codeRest.substring(1);
+			//interpretedCodeText += labels[currentLanguage].blank;
+			//interpretedCodeText += "<br>";//uncomment in case of showing blank choices
+		}
+		else
+		{
+			flag = 1;
+			for(i=0 ; i<deviceOptions.length ; i++)
+			{
+				for(l=1; l < codeRest.length; l++)
+				{
+					if(codeRest.substring(0, l) == deviceOptions[i].codeText)
+					{
+						if(deviceOptions[i].optionNumber == o)
+						{
+							if(chosenDeviceIndex > 0)
+							{
+								interpretedCodeText += '<div class="label">' + deviceOptions[chosenDeviceIndex].labels[deviceOptions[i].optionNumber-1] + ': </div>';
+							}
+							if(deviceOptions[i].optionNumber == 0)
+							{
+								chosenDeviceIndex = i;
+							}
+							interpretedCodeText += deviceOptions[i].fullText;
+							interpretedCodeText += "<br>";
+							codeRest = codeRest.substring(l);
+							i = deviceOptions.length;
+							flag = 0;
+							break;
+						}
+					}
+				}
+			}
+			if(flag)
+			{
+				interpretedCodeText = labels[currentLanguage].errorCode+"<br>";
+				break;
+			}
+		}
+	}
+	
+	document.getElementById("searchByCodeExplanation").innerHTML = interpretedCodeText;
+}
+
+function checkDevices(){
+	var text = '<select onchange="setDeviceSelected()" id="deviceChoice">';
+	
+	for(i = 0; i < deviceOptions.length; i++)
+	{
+		if((deviceOptions[i].optionNumber == 0)&&(deviceOptions[i].language == currentLanguage))
+		{
+			text += '<option id="device' + deviceOptions[i].deviceNumber + '" value="' + i + '">';
+			text += deviceOptions[i].fullText + '</option>';
+		}
+	}
+	
+	text += "</select><br><br>";
+	
+	document.getElementById("device").innerHTML = text;
+}
+
+function checkOptions(){
+
+	var deviceNumberChosen = 0;
+	var chosenDeviceIndex = 0;
+	
+	for(i = 0; i < deviceOptions.length; i++)
+	{
+		if((deviceOptions[i].optionNumber == 0)&&(deviceOptions[i].language == currentLanguage))
+		{
+			if(deviceOptions[i].selected)
+			{
+				deviceNumberChosen = deviceOptions[i].deviceNumber;
+				chosenDeviceIndex = i;
+			}
+		}
+	}
+	
+	var text = "";
+	var optionText = "";
+	var flag = 0;
+	var optionFlag = 0;
+	
+	for(j = 0; j < deviceOptions.length; j++)
+	{
+		flag = 0;
+		optionText = "";
+		
+		if(deviceOptions[j].optionNumber > optionFlag)
+		{
+			optionText += '<div class="label">' + deviceOptions[chosenDeviceIndex].labels[deviceOptions[j].optionNumber-1] + ': </div>';
+			optionText += '<select onchange="setOptionSelected()" class="optionChoice">';
+			optionText += '<option class="option"' + ' value="' + 0 + '">';
+			optionText += labels[currentLanguage].blank + '</option>';
+	
+			for(i = 0; i < deviceOptions.length; i++)
+			{
+				if((deviceOptions[i].optionNumber == deviceOptions[j].optionNumber)&&(deviceOptions[i].language == currentLanguage))
+				{
+					if(deviceOptions[i].deviceNumber == deviceNumberChosen)
+					{
+						optionText += '<option class="option"' + ' value="' + i + '">';
+						optionText += deviceOptions[i].fullText + '</option>';
+						flag = 1;
+					}
+				}
+			}
+	
+			optionText += "</select><br><br>";
+	
+		}
+		if(flag > 0)
+		{
+			text += optionText;
+			optionFlag = deviceOptions[j].optionNumber;
+		}
+	
+	}
+	
+	document.getElementById("deviceOptions").innerHTML = text;
+	updateCodes();
+}
+
+function clearChoice(){
+	for(i = 0; i < deviceOptions.length; i++)
+	{
+		deviceOptions[i].selected = false;
+	}
+}
+
+function updateCodes(){
+	var text = "";
+	var optionFlag = true;
+	
+	for(o = 0; o < optionsAmount +1; o++)
+	{
+		optionFlag = true;
+		for(i = 0; i < deviceOptions.length; i++)
+		{
+			if(deviceOptions[i].optionNumber == o)
+			{
+				if(deviceOptions[i].selected)
+				{
+					text += deviceOptions[i].codeText;
+					optionFlag = false; 
+				}
+			}
+		}
+		
+		if(optionFlag)
+		{
+			text += BLANK_CHAR;
+		}
+	}
+	if(text.length < CODE_SIZE)
+	{
+		text += BLANK_CHAR;
+	}
+	
+	document.getElementById("generatedCodeOutput").innerHTML = text;
+}
+
+function setDeviceSelected()
+{
+	var i = document.getElementById("deviceChoice").value;
+	clearChoice();
+	deviceOptions[i].selected = true;
+	checkOptions();
+	updateCodes();
+}
+
+function setOptionSelected()
+{
+	var elements = document.getElementsByClassName("optionChoice");
+
+	for(i = 0; i < deviceOptions.length; i++)
+	{
+		if(deviceOptions[i].optionNumber > 0)
+		{
+			deviceOptions[i].selected = false;
+		}
+	}
+	
+	for(j = 0; j < elements.length; j++)
+	{
+		if(elements[j].value > 0)
+		{
+			deviceOptions[elements[j].value].selected = true;
+			
+		}
+	}
+	
+	updateCodes();
+}
+
+function refreshLanguage(arg){
+	
+	clearChoice();
+	var tmp = 0;
+	if(languages[arg] == "EN")
+	{
+		tmp = 0;
+		currentLanguage = 0;
+	}
+	else if(languages[arg] == "PL")
+	{
+		tmp = 1;
+		currentLanguage = 1;
+	}
+	
+	document.getElementById("mainTitle").innerHTML = labels[tmp].mainTitle;
+	document.getElementById("searchByCodeText").innerHTML = labels[tmp].searchByCodeText;
+	document.getElementById("deviceChoiceText").innerHTML = labels[tmp].deviceChoiceText;
+	document.getElementById("generatedCodeText").innerHTML = labels[tmp].generatedCodeText;
+	
+	for(i = 0; i < deviceOptions.length; i++)
+	{
+		deviceOptions[i].selected = false;
+	}
+	
+	document.getElementById("inputCode").value = "";
+	checkDevices();
+	checkOptions();
+	interpretCode();
+}
+
+</script>
+
+</body>
+</html>
